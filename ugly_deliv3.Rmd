@@ -1,0 +1,100 @@
+---
+title: "Deliverable 3"
+output: html_notebook
+---
+
+Opening data files
+```{r}
+rm(list = ls())
+
+linkCSV='https://github.com/jstluong/deliv3/raw/main/Washington_State_Public_Schools.csv'
+
+school <- read.csv(linkCSV)
+View(school)
+```
+
+```{r}
+str(school)
+```
+
+```{r}
+myGit="https://github.com/jstluong/deliv3/"
+myGeo="raw/main/county20.json"
+mapLink=paste0(myGit, myGeo)
+```
+
+Import WA County dataset
+```{r}
+library(sf)
+wacount <- read_sf(mapLink)
+View(wacount)
+```
+
+
+
+
+```{r}
+library(ggplot2)
+base=ggplot(data=wacount, aes(geometry=geometry)) + theme_classic()
+basemap=base + geom_sf(fill='grey', color=NA)
+
+basemap
+```
+
+```{r}
+library(dplyr)
+
+schoolmerge <- merge(school, wacount, by.x = "County", by.y = "NAME", all = TRUE)
+View(schoolmerge)
+
+str(schoolmerge)
+
+nrow(schoolmerge)==nrow(school)
+county_df <- (as.data.frame(table(schoolmerge$County)))
+county_df
+
+summary(county_df$Freq)
+
+scmerge <- merge (schoolmerge, county_df, by.x ="County", by.y = "Var1", all = TRUE)
+View(scmerge)
+
+scmerge$cat_freq <- 
+```
+
+Plot merged map:
+```{r}
+mergedMap <- basemap + geom_sf(data = scmerge, aes(fill=Freq, geometry=geometry), color=NA) 
+mergedMap
+```
+
+```{r}
+gradientmap <- mergedMap + scale_fill_gradient(low = "#deebf7", high = "#3182bd")
+gradientmap
+```
+
+```{r}
+titleText='Distribution of public schools in WA by county'
+sourceText='Washington Geospatial Open Data Portal'
+
+finalmap <- gradientmap + labs(title=titleText, x = NULL, y = NULL, caption = sourceText)
+finalmap
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
