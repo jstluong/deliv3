@@ -1,0 +1,101 @@
+---
+title: "Deliverable 3 - Students per school in Washington school districts"
+output:
+  html_document:
+    df_print: paged
+---
+
+---
+title: "Deliverable 3"
+output: html_notebook
+---
+
+Opening data files
+```{r}
+rm(list = ls())
+
+linkCSV='https://github.com/jstluong/deliv3/raw/main/stupop%20by%20county%202.csv'
+stupop <- read.csv(linkCSV)
+
+linkCSV2='https://github.com/jstluong/deliv3/raw/main/Washington_State_Public_Schools.csv'
+schools=read.csv(linkCSV2)
+```
+
+View structure:
+```{r}
+str(stupop)
+```
+```{r}
+myGit="https://github.com/jstluong/deliv3/"
+myGeo="raw/main/Washington_School_District_Boundaries_Masked.geojson"
+mapLink=paste0(myGit, myGeo)
+```
+
+Import WA County dataset
+```{r}
+library(sf)
+wadist <- read_sf(mapLink)
+```
+
+
+```{r}
+library(ggplot2)
+base=ggplot(data=wadist, aes(geometry=geometry)) + theme_classic()
+basemap=base + geom_sf(fill='grey', color=NA)
+
+basemap
+```
+
+```{r}
+library(dplyr)
+
+mapmerge <- merge(stupop, wadist, by = "Name", by.y = "ShortName", all = TRUE)
+
+distmerge <- merge(mapmerge, schools, by = "LEAName", all = TRUE)
+
+str(distmerge)
+
+county_df <- (as.data.frame(table(distmerge$LEAName)))
+county_df
+
+freqmerge <- merge(distmerge, county_df, by.x = "LEAName", by.y = "Var1", all = TRUE)
+
+freqmerge$sturatio <- freqmerge$FTE.Students / freqmerge$Freq
+```
+
+Plot merged map:
+```{r}
+ratiomap <- basemap + geom_sf(data = freqmerge, aes(fill=sturatio, geometry=geometry), color=NA) 
+ratiomap
+```
+
+```{r}
+gradientmap <- ratiomap + scale_fill_gradient(low = "#deebf7", high = "#3182bd")
+gradientmap
+```
+
+```{r}
+titleText='Student to school ratio in WA by school district'
+sourceText='Sources: Washington Geospatial Open Data Portal and Washington OSPI'
+
+finalmap <- gradientmap + labs(title=titleText, x = NULL, y = NULL, caption = sourceText) + guides(fill=guide_legend(title="Student to school ratio"))
+finalmap
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
